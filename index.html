@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whimsical Study Timer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Fredoka", "Comic Sans MS", cursive, sans-serif;
+      color: #6b8a3a;
+      background-color: #fffbe6;
+      background-image:
+        repeating-linear-gradient(90deg,
+          #fde2e7 0 40px, #fffbe6 40px 80px,
+          #cde9f8 80px 120px, #fffbe6 120px 160px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 15px;
+      box-sizing: border-box;
+      text-align: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Decorative stickers */
+    .sticker {
+      position: fixed;
+      font-size: 42px;
+      pointer-events: none;
+      opacity: 0.9;
+      z-index: 0;
+    }
+    .s1 { top: 4%; left: 3%; transform: rotate(-12deg); }
+    .s2 { top: 6%; right: 5%; transform: rotate(10deg); }
+    .s3 { bottom: 6%; left: 5%; transform: rotate(-6deg); }
+    .s4 { bottom: 8%; right: 4%; transform: rotate(8deg); }
+
+    /* Scalloped white frame with polka dots */
+    .card {
+      position: relative;
+      z-index: 1;
+      width: min(560px, 94vw);
+      background-color: #ffffff;
+      background-image: radial-gradient(circle, #f8c8d4 3px, transparent 3.5px);
+      background-size: 26px 26px;
+      border: 6px solid #fbd0da;
+      border-radius: 30px;
+      box-shadow: 0 0 0 8px #ffffff, 0 10px 25px rgba(180, 120, 140, 0.25);
+      padding: 30px 25px 35px;
+      box-sizing: border-box;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 3px dashed #f4b6c6;
+      border-radius: 22px;
+      pointer-events: none;
+    }
+    .card-inner {
+      position: relative;
+      background: #fff;
+      border-radius: 20px;
+      padding: 10px 10px 20px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 2.6rem;
+      font-weight: 600;
+      color: #7aa33d;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      margin: 0 0 15px;
+      color: #d9859e;
+      font-size: 1.1rem;
+    }
+
+    .mode {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #7aa33d;
+      margin-bottom: 4px;
+    }
+    .pet { font-size: 80px; margin: 5px 0; transition: transform 0.3s; }
+    .pet.bounce { transform: translateY(-14px) rotate(-5deg); }
+
+    .time {
+      font-size: 4.6rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: #d9759a;
+      margin: 5px 0 18px;
+      text-shadow: 2px 2px 0 #fde2e7;
+    }
+
+    .buttons button {
+      background: #f9a8c0;
+      color: #fff;
+      border: 3px solid #fff;
+      outline: 2px dashed #f4b6c6;
+      outline-offset: 3px;
+      padding: 10px 20px;
+      margin: 6px;
+      font-size: 1.05rem;
+      font-family: inherit;
+      font-weight: 600;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #e88aa6;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .buttons button:hover { background: #fbb7cb; }
+    .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #e88aa6; }
+    .buttons button.secondary { background: #a7d8ef; box-shadow: 0 4px 0 #7fbcd9; }
+    .buttons button.secondary:hover { background: #bfe4f6; }
+
+    .settings {
+      margin-top: 18px;
+      font-size: 1rem;
+      color: #7aa33d;
+      font-weight: 600;
+    }
+    .settings input {
+      width: 65px;
+      padding: 6px;
+      font-size: 1rem;
+      font-family: inherit;
+      text-align: center;
+      border: 2px solid #fbd0da;
+      border-radius: 12px;
+      color: #6b8a3a;
+      outline: none;
+    }
+    .settings input:focus { border-color: #a7d8ef; }
+
+    .stats {
+      margin-top: 20px;
+      background: #fff8fa;
+      border: 2px dashed #f4b6c6;
+      border-radius: 18px;
+      padding: 12px 20px;
+      color: #7aa33d;
+      font-weight: 600;
+    }
+    .stats strong { color: #d9759a; }
+    .hearts { font-size: 22px; min-height: 30px; margin-top: 4px; }
+
+    #studyLink {
+      display: inline-block;
+      margin-top: 18px;
+      color: #d9759a;
+      font-weight: 600;
+      text-decoration: none;
+      background: #fde2e7;
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+    #studyLink:hover { background: #fbd0da; }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 2rem; }
+      .time { font-size: 3.4rem; }
+      .pet { font-size: 64px; }
+      .sticker { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sticker s1">🍓</div>
+  <div class="sticker s2">🎀</div>
+  <div class="sticker s3">🧁</div>
+  <div class="sticker s4">🍒</div>
+
+  <div class="card">
+    <div class="card-inner">
+      <h1>🍅 Study Timer</h1>
+      <p class="subtitle">Study a little, rest a little!</p>
+
+      <div class="mode" id="mode">Time to study!</div>
+      <div class="pet" id="pet">🐰</div>
+      <div class="time" id="time">25:00</div>
+
+      <div class="buttons">
+        <button id="startBtn">Start</button>
+        <button id="pauseBtn" class="secondary">Pause</button>
+        <button id="resetBtn" class="secondary">Reset</button>
+      </div>
+
+      <div class="settings">
+        Study (min): <input type="number" id="studyMin" value="25" min="1" max="120">
+        Break (min): <input type="number" id="breakMin" value="5" min="1" max="60">
+      </div>
+
+      <div class="stats">
+        <div>Sessions completed today: <strong id="sessions">0</strong></div>
+        <div class="hearts" id="hearts"></div>
+      </div>
+
+      <a id="studyLink" href="index.html">🎡 Pick a random topic</a>
+    </div>
+  </div>
+
+  <script>
+    const timeEl = document.getElementById("time");
+    const modeEl = document.getElementById("mode");
+    const petEl = document.getElementById("pet");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const studyInput = document.getElementById("studyMin");
+    const breakInput = document.getElementById("breakMin");
+    const sessionsEl = document.getElementById("sessions");
+    const heartsEl = document.getElementById("hearts");
+
+    let isStudy = true;
+    let secondsLeft = studyInput.value * 60;
+    let timerId = null;
+
+    // ---------- Saved daily count (stays after refresh) ----------
+    const today = new Date().toISOString().slice(0, 10);
+    let stats = JSON.parse(localStorage.getItem("studyStats") || "{}");
+    if (stats.date !== today) stats = { date: today, count: 0 };
+
+    function saveStats() {
+      localStorage.setItem("studyStats", JSON.stringify(stats));
+    }
+
+    function showStats() {
+      sessionsEl.textContent = stats.count;
+      heartsEl.textContent = "💖".repeat(Math.min(stats.count, 20));
+    }
+
+    // ---------- Display ----------
+    function showTime() {
+      const m = Math.floor(secondsLeft / 60);
+      const s = secondsLeft % 60;
+      timeEl.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+      document.title = `${timeEl.textContent} - Study Timer`;
+    }
+
+    function updatePet() {
+      if (isStudy) {
+        petEl.textContent = "🐰";
+        modeEl.textContent = "Time to study!";
+      } else {
+        petEl.textContent = "😴";
+        modeEl.textContent = "Break time, relax!";
+      }
+    }
+
+    // ---------- Sound ----------
+    function beep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        osc.frequency.value = 880;
+        osc.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.6);
+      } catch (e) {}
+    }
+
+    // ---------- Timer logic ----------
+    function tick() {
+      secondsLeft--;
+      if (secondsLeft <= 0) {
+        finishSession();
+      }
+      showTime();
+    }
+
+    function finishSession() {
+      beep();
+      petEl.classList.add("bounce");
+      setTimeout(() => petEl.classList.remove("bounce"), 600);
+
+      if (isStudy) {
+        stats.count++;
+        saveStats();
+        showStats();
+        alert("Great work! Time for a break. 🎉");
+        isStudy = false;
+        secondsLeft = breakInput.value * 60;
+      } else {
+        alert("Break is over. Ready to study? 📚");
+        isStudy = true;
+        secondsLeft = studyInput.value * 60;
+      }
+      updatePet();
+      showTime();
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (timerId) return;
+      timerId = setInterval(tick, 1000);
+      updatePet();
+    });
+
+    pauseBtn.addEventListener("click", () => {
+      clearInterval(timerId);
+      timerId = null;
+    });
+
+    resetBtn.addEventListener("click", () => {
+      clearInterval(timerId);
+      timerId = null;
+      isStudy = true;
+      secondsLeft = studyInput.value * 60;
+      updatePet();
+      showTime();
+    });
+
+    studyInput.addEventListener("change", () => {
+      if (!timerId && isStudy) {
+        secondsLeft = studyInput.value * 60;
+        showTime();
+      }
+    });
+
+    breakInput.addEventListener("change", () => {
+      if (!timerId && !isStudy) {
+        secondsLeft = breakInput.value * 60;
+        showTime();
+      }
+    });
+
+    // Start-up
+    showStats();
+    showTime();
+    updatePet();
+  </script>
+</body>
+</html>
